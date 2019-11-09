@@ -64,8 +64,7 @@ CHANNEL_STATE_REQUEST = 1
 CHANNEL_STATE_ACCEPT = 2
 CHANNEL_STATE_SUCCESS = 3
 
-empty_message = json.loads(
-    """
+empty_message = json.loads("""
 {
     "callType": "",
     "extMessage": {},
@@ -79,8 +78,7 @@ empty_message = json.loads(
     "state": 0,
     "channelType": 0
 }
-    """
-)
+""")
 
 
 def get_empty_message():
@@ -90,4 +88,5 @@ def get_empty_message():
 
 def cur_time():
     return time.time()
+
 

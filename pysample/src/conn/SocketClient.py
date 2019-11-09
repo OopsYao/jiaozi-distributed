@@ -1,7 +1,9 @@
+
 import socket
 
 
 class SocketClient(object):
+
     def __init__(self, ip, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((ip, port))
@@ -12,11 +14,11 @@ class SocketClient(object):
         self.socket.send(message.encode())
 
     def read_line(self):
-        buf = bytes()
+        buf = ""
         while True:
             try:
                 recv = self.socket.recv(1)
-                if recv == "\n":
+                if recv == '\n':
                     break
                 buf += recv
             except socket.error:
