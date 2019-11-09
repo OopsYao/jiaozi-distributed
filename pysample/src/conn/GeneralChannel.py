@@ -51,6 +51,7 @@ class GeneralChannel(Channel.Channel):
         return self.config[Const.index]
 
     def get_config(self, args):
+        # 以分层的方式获取到client.js某一层
         obj = self.config
         for arg in args:
             obj = obj[arg]

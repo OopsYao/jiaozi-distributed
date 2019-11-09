@@ -26,6 +26,9 @@ class Action(object):
         return self.channel_type != Const.CHANNEL_TYPE_ERROR and self.channel_state == Const.CHANNEL_STATE_SUCCESS
 
     def get_other_type(self):
+        # CHANNEL_TYPE为normal返回fast
+        # 为fast返回normal
+        # 其余情况返回normal
         return Const.CHANNEL_TYPE_FAST if self.channel_type == Const.CHANNEL_TYPE_NORMAL else Const.CHANNEL_TYPE_NORMAL
 
     def do_request(self, channel_type):
@@ -73,9 +76,11 @@ class Action(object):
             self.do_request(self.get_other_type())
 
     def on_prepare(self, message):
+        # timeout = max(timeout, current_time + config.timeout)
         self.timeout = max(self.timeout, Const.cur_time() + self.scheduler.channel.get_config((Const.main_config,
                                                                                                Const.timeout)))
-        self.waiting_count += 1
+
+        self.waiting_count += 1 # 本action的排队队列数+1
         if self.channel_state == Const.CHANNEL_STATE_NONE:
             self.do_request(self.get_other_type())
 
@@ -83,6 +88,7 @@ class Action(object):
         if self.scheduler.get_id() == message[Const.sys_message][Const.target]:
             print "succ received message: %s" % (message[Const.sys_message][Const.data])
             return
+        # 如果本节点不是目标节点
         self.waiting_count -= 1
         if self.is_valid():
             self.do_send(message)
