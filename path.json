@@ -1,0 +1,5 @@
+{
+    "DATA_GENERATOR_HOME": "data-generate",
+    "SERVER_HOME": "server/cmake-build-debug",
+    "JAR_FILE_NAME":"data-generator-1.0-SNAPSHOT-jar-with-dependencies.jar"
+}
