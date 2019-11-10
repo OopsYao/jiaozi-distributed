@@ -23,7 +23,7 @@
 	"mainConfig":{
 		"masterPort":8002,
 		"masterIp":"127.0.0.1",
-		"nodeCount":2,
+		"nodeCount":10,
 		"timeOut":3.1
 	}
 }

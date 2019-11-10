@@ -15,7 +15,7 @@ Set-Location $DATA_GENERATOR_HOME
 java -jar $JAR_FILE_NAME
 # 将生成的server与client各自的配置文件放到相应的目录
 Move-Item -Force $inputJSON.serverConfData $SERVER_HOME
-Move-Item -Force $inputJSON.clinetConfData .\client.json # 不是故意要拼错，而是数据生成器的源码就离谱
+Move-Item -Force $inputJSON.clinetConfData "${WORKING_DIR}/client.json" # 不是故意要拼错，而是数据生成器的源码就离谱
 
 Set-Location $SERVER_HOME
 # 将测试文件放到指定的地方（这会与生成的server.json中的testData
