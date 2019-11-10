@@ -16,18 +16,22 @@ def get_sigma():
 def get_test_msg_num():
     """获取要求传达的msg的数量"""
     test = json.load(open(server_home + "test.json"))
-    # TODO 原score.py中将数量除以了2，没弄明白
-    return len(test)
+    # 除去一半的prepare消息
+    return len(test) / 2
 
 
 def get_delay_list():
     """实际到达的msg的延迟（包含了可能超时到达的）"""
+    arrived_set = set()
     delay_list = []
     with open(cmake_build_debug_dir + "attach.log") as log:
         for line in log.readlines():
             # hash(or data), 收到时间, 延时
-            _, _, d = line.split(",")
-            delay_list.append(float(d))
+            h, _, d = line.split(",")
+            # 去重添加，仅算第一个到达的
+            if h not in arrived_set:
+                delay_list.append(float(d))
+            arrived_set.add(h)
     return delay_list
 
 
