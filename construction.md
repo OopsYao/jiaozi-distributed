@@ -50,8 +50,15 @@
 - channel destroy
     - `on_channel_destroy(channel_id)`
 
+处理路由表消息
 - sys message
-    - `on_message(message)`
+    - `on_sys(message)`
+    msg
+    l -> l'
+    判断是否插入路由表 , 路由表 route_table
+    yes -> 修改路由表， 转发这个 l'消息给除from_node以外得其他node
+    no -> 什么都不做
+    
 
 
 ### Caller
