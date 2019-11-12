@@ -1,6 +1,7 @@
 from conn.channel import GeneralChannel
 import json
 import time
+from route import dispatcher
 
 
 def main():
@@ -13,11 +14,9 @@ def main():
 
 def main_loop(channel):
     while True:
-        msg = channel.recv()
-        for m in msg:
-            print(msg)
-            print("ID of this node",channel.get_id())
-        time.sleep(0.1)
+        message_list = channel.recv()
+        for m in message_list:
+            dispatcher.on_recv(m)
 
 
 if __name__ == "__main__":

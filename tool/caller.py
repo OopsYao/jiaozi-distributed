@@ -1,9 +1,9 @@
-def build_channel(target_node, channel_type):
+def build_channel(target_node, channel_type, success_callback, failure_callback):
     """建立与target_node之间的通道"""
     pass
 
 
-def destroy_channel(channel_id):
+def destroy_channel(channel_id, callback):
     """摧毁通道"""
     pass
 
