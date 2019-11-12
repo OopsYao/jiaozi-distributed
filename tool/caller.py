@@ -1,3 +1,8 @@
+from conn.channel import GeneralChannel
+from conn import const
+from tool import message
+
+
 def build_channel(target_node, channel_type, success_callback, failure_callback):
     """建立与target_node之间的通道"""
     pass
