@@ -63,8 +63,8 @@ def _on_build(message):
         agreed = handler.on_channel_build_request(
             target_node, message[const.channel_type]
         )
+        caller.reply(message, agreed)
         if agreed:
-            # TODO call caller's API to agree the request
             await_build_result(
                 target_node,
                 channel_type,
@@ -72,7 +72,6 @@ def _on_build(message):
                 handler.on_channel_build_failure,
             )
         else:
-            # TODO call caller's API to refuse
             pass
     else:
         # 收到的是通道结果
