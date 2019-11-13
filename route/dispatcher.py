@@ -1,11 +1,12 @@
 from conn import const
 from route.handler import SendHandler
 from route.handler import BuildRequestHandler
-from queue import SimpleQueue
+from route.handler import SysHandler
 from tool import caller
 import time
 
 
+# 三种监听器等候区
 waiting_for_send = {}
 waiting_for_build = {}
 waiting_for_destroy = {}
@@ -37,7 +38,7 @@ def _on_prepare(message):
 
 
 def _on_send(message):
-    EPS = 0.3
+    EPS = 0.3  # 误差范围(s)
     target_node = message[const.sys_message][const.target]
     for target, eta, handler_list in waiting_for_send.items():
         # 若该send消息的到达时间与预计到达时间在误差范围内
@@ -91,7 +92,7 @@ def _on_destroy(message):
 
 def _on_sys(message):
     """收到自定义消息"""
-    pass
+    SysHandler().on_sys(message)
 
 
 def await_send_message(target_node, eta, handler):
