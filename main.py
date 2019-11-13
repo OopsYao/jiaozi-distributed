@@ -11,7 +11,7 @@ def main():
         config = json.load(f)
         channel.init_config(config)
         node.init(channel)
-        main_loop()
+        main_loop(channel)
 
 
 def main_loop(channel):
@@ -19,6 +19,7 @@ def main_loop(channel):
         message_list = channel.recv()
         for m in message_list:
             dispatcher.on_recv(m)
+        time.sleep(0.1)
 
 
 if __name__ == "__main__":

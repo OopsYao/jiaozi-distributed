@@ -21,27 +21,27 @@ K = 2  # K( m_h' * delay_h + m_l' * delay_l ) < timeout
 
 def init(channel):
     """ 初始化参数 """
-    N = channel.get_config(const.main_config, const.node_count)
-    NODE_ID = channel.get_config(const.index)
+    N = channel.get_config((const.main_config, const.node_count))
+    NODE_ID = channel.get_config([const.index])
 
     # 云端测试环境
-    C = channel.get_config(const.main_config, const.max_channel_conn)
+    C = channel.get_config([const.max_channel_conn])
     # 本地测试环境
     with open("server/cmake-build-debug/server.json") as f:
         config = json.load(f)
         C = config["mainConfig"]["maxChannelCount"][NODE_ID - 1]
 
-    TIME_OUT = channel.get_config(const.main_config, const.timeout)
+    TIME_OUT = channel.get_config((const.main_config, const.timeout))
     TIME_BUILD_H = channel.get_config(
-        const.channel_config, const.high_speed, "buildTime"
+        (const.channel_config, const.high_speed, "buildTime")
     )
     TIME_BUILD_H = channel.get_config(
-        const.channel_config, const.normal_speed, "buildTime"
+        (const.channel_config, const.normal_speed, "buildTime")
     )
-    LAG_H = channel.get_config(const.channel_config, const.high_speed, const.lag)
-    LAG_N = channel.get_config(const.channel_config, const.normal_speed, const.lag)
-    M_H = channel.get_config(const.channel_config, const.high_speed, "maxCount")
-    M_N = channel.get_config(const.channel_config, const.normal_speed, "maxCount")
+    LAG_H = channel.get_config((const.channel_config, const.high_speed, const.lag))
+    LAG_N = channel.get_config((const.channel_config, const.normal_speed, const.lag))
+    M_H = channel.get_config((const.channel_config, const.high_speed, "maxCount"))
+    M_N = channel.get_config((const.channel_config, const.normal_speed, "maxCount"))
 
 
 """

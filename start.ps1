@@ -25,6 +25,7 @@ foreach ($index in $array) {
 # TODO 但好像不起作用?
 $completed = Register-ObjectEvent -InputObject $server -EventName StateChanged -Action {
     Write-Host ('Job #{0} ({1}) complete.' -f $sender.Id, $sender.Name)
+    python ./score.py
     Get-Job -Name Node*, Server | Remove-Job -Force
     $completed | Unregister-Event
 }
