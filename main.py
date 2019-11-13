@@ -1,6 +1,7 @@
 from conn.channel import GeneralChannel
 import json
 import time
+from route import node
 from route import dispatcher
 
 
@@ -9,7 +10,8 @@ def main():
     with open("client.json") as f:
         config = json.load(f)
         channel.init_config(config)
-        main_loop(channel)
+        node.init(channel)
+        main_loop()
 
 
 def main_loop(channel):
