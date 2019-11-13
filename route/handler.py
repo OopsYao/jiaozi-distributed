@@ -108,7 +108,7 @@ class SysHandler:
 
             # 如果该记录对当前节点来说更优，则替代路由表中那条记录
             if delay<old_delay:
-                self.modify_toute_table(scan_result,route)
+                self.modify_route_table(scan_result,route)
 
         # 修改该条记录中的next_node = 当前节点ID
 
@@ -137,7 +137,7 @@ class SysHandler:
     
     # 修改node.route_table
     # 
-    def modify_toute_table(self, index, route):
+    def modify_route_table(self, index, route):
         node.route_table[index] = route
         
 
