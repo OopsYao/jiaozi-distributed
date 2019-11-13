@@ -100,22 +100,61 @@ class SendHandler:
 
 
 class BuildRequestHandler:
-    """处理其他节点请求建立通道的请求，以及后续建立结果的处理"""
+    """ 处理其他节点请求建立通道的请求，以及后续建立结果的处理 """
 
     def on_channel_build_request(self, request_node, channel_type):
-        pass
+        # 直接同意
+        self.channel_type = channel_type
+        self.request_node = request_node
+        return True
 
     def on_channel_build_success(self, channel_id):
-        pass
+        # 修改邻接表
+        node.adjacent_nodes.append(
+            {
+                "target": self.request_node,
+                "channelType": self.channel_type,
+                "channelId": channel_id,
+            }
+        )
+        # 修改路由表，插入记录
+        m_h = 1 if self.channel_type == const.CHANNEL_TYPE_FAST else 0
+        node.route_table.append(
+            {
+                "next_node": self.request_node,
+                "m_h": m_h,
+                "m_l": 1 - m_h,
+                "end": self.request_node,
+            }
+        )
+
+        # 向周围节点广播（除了建立通道的那个节点 ）
+        for adj in node.adjacent_nodes:
+            if adj["target"] == self.request_node:
+                continue
+            adj_channel_type, adj_channel_id = node.get_channel(adj)
+            caller.send_sys_message(
+                {
+                    "route_msg": {
+                        "next_node": node.NODE_ID,
+                        "m_h": m_h
+                        + (1 if adj_channel_type == const.CHANNEL_TYPE_FAST else 0),
+                        "m_l": 1
+                        - m_h
+                        + (1 if adj_channel_type == const.CHANNEL_TYPE_NORMAL else 0),
+                        "end": self.request_node,
+                    }
+                },
+                adj["target"],
+                adj["channelId"],
+            )
 
     def on_channel_build_failure(self, error_code):
-        pass
-
-    pass
+        return
 
 
 class DestroyHandler:
-    """处理其他节点发起的通道销毁成功后的通知"""
+    """ 处理其他节点发起的通道销毁成功后的通知 """
 
     def on_channel_destroy(self, channel_id):
         pass
