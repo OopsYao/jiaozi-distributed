@@ -33,7 +33,7 @@ def _on_prepare(message):
     delay = sys_message[const.delay]
 
     handler = SendHandler()
-    handler.on_prepare(target_node, delay)
+    handler.on_prepare(target_node, delay, message)
     await_send_message(target_node, time.time() + delay, handler)
 
 
