@@ -8,6 +8,8 @@ TIME_BUILD_H = 1.1  # 高速通道的建立时间
 TIME_BUILD_N = 1.1  # 普通通道建立时间
 LAG_H = 0.1  # 高速通道时延
 LAG_N = 0.5  # 普通通道时延
+M_H = 100 # 高速通道限制数目
+M_N = 100 # 低速通道限制数目
 
 CHANNEL_TYPE_NORMAL = 0  # 低速通道标识
 CHANNEL_TYPE_FAST = 1  # 高速通道标识

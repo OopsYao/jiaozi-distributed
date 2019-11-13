@@ -13,8 +13,11 @@ class SendHandler:
 
     def _rand_channel(self):
         """ 按策略随机选择通道类型 """
-        # TODO random policy
-        return const.CHANNEL_TYPE_NORMAL
+        p = node.M_H / (node.M_H + node.M_N)
+        if random.random() < p:
+            return const.CHANNEL_TYPE_FAST
+        else:
+            return const.CHANNEL_TYPE_NORMAL
 
     def on_prepare(self, target_node, delay, prepare_message):
         for record in node.route_table:
