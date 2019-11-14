@@ -24,8 +24,8 @@ foreach ($index in $array) {
 # 在Server Job结束后删除节点的Job
 # TODO 但好像不起作用?
 $completed = Register-ObjectEvent -InputObject $server -EventName StateChanged -Action {
-    Write-Host ('Job #{0} ({1}) complete.' -f $sender.Id, $sender.Name)
     python ./score.py
+    Write-Host ('Job #{0} ({1}) complete.' -f $sender.Id, $sender.Name)
     Get-Job -Name Node*, Server | Remove-Job -Force
     $completed | Unregister-Event
 }

@@ -1,6 +1,6 @@
 {
   "mainConfig": {
-    "nodeCount": 10,
+    "nodeCount": 4,
     "timeOut": 3.1,
     "masterIp": "127.0.0.1",
     "masterPort": 8002,

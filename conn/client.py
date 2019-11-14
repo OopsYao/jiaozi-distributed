@@ -16,7 +16,7 @@ class SocketClient(object):
         while True:
             try:
                 recv = self.socket.recv(1)
-                if recv == "\n":
+                if recv == b"\n":
                     break
                 buf += recv
             except socket.error:

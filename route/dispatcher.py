@@ -4,6 +4,7 @@ from route.handler import BuildRequestHandler
 from route.handler import SysHandler
 from tool import caller
 import time
+from route import node
 
 
 # 三种监听器等候区
@@ -13,7 +14,7 @@ waiting_for_destroy = {}
 
 
 def on_recv(message):
-    call_type = message[const.channel_type]
+    call_type = message[const.call_type]
     # 消息初步分类
     if call_type == const.CALL_TYPE_PREPARE:
         _on_prepare(message)
@@ -40,16 +41,16 @@ def _on_prepare(message):
 def _on_send(message):
     EPS = 0.3  # 误差范围(s)
     target_node = message[const.sys_message][const.target]
-    for target, eta, handler_list in waiting_for_send.items():
+    for (target, eta), handler_list in waiting_for_send.items():
         # 若该send消息的到达时间与预计到达时间在误差范围内
         if target == target_node and abs(time.time() - eta) < EPS:
             for handler in handler_list:
-                handler.on_send(message)
+                handler.on_send(target_node, message)
             del waiting_for_send[(target, eta)]
             break
     else:
         # 没有找到匹配的prepare session
-        SendHandler().on_send(message)
+        SendHandler().on_send(message[const.sys_message][const.target], message)
 
 
 def _on_build(message):
@@ -77,12 +78,38 @@ def _on_build(message):
     else:
         # 收到的是通道结果
         key = (target_node, channel_type)
-        for succ_call, fail_call in waiting_for_build[key]:
+        if key in waiting_for_build.keys():
+            for succ_call, fail_call in waiting_for_build[key]:
+                if channel_id != 0:
+                    succ_call(target_node, channel_id, channel_type)
+                    try:
+                        node.requiring_channels.remove(key)
+                    except ValueError:
+                        print("ALREADY REMOVED")
+                else:
+                    fail_call(message[const.err_code])
+            del waiting_for_build[key]
+
+        # 针对模糊通道要求等待者
+        key_vague = (target_node, None)
+        if key_vague in waiting_for_build.keys():
             if channel_id != 0:
-                succ_call(channel_id)
-            else:
-                fail_call(message[const.err_code])
-        del waiting_for_build[key]
+                for s, _ in waiting_for_build[key_vague]:
+                    s(target_node, channel_id, channel_type)
+                del waiting_for_build[key_vague]
+            elif (
+                target_node,
+                const.CHANNEL_TYPE_FAST
+                if channel_type == const.CHANNEL_TYPE_NORMAL
+                else const.CHANNEL_TYPE_NORMAL,
+            ) not in node.requiring_channels:
+                # 该类型通道建立不成功
+                # 而正在建立的通道中又没有另一类型的
+                # 即该等待者没有等待意义
+                for _, f in waiting_for_build[key_vague]:
+                    f(message[const.err_code])
+                del waiting_for_build[key_vague]
+            # 否则继续等待另一类型通道建立结果消息
 
 
 def _on_destroy(message):
@@ -119,4 +146,4 @@ def _add_to(dict, key, value):
     ls = dict.get(key, [])
     if len(ls) == 0:
         dict[key] = ls
-    ls.add(value)
+    ls.append(value)

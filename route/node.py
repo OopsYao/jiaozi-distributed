@@ -1,7 +1,10 @@
 from conn import const
 import json
+import sys
 
 """node内部的所有信息"""
+
+current_module = sys.modules[__name__]
 
 N = 10  # 总节点数目
 C = 0  # 最大持有通道数量
@@ -21,27 +24,36 @@ K = 2  # K( m_h' * delay_h + m_l' * delay_l ) < timeout
 
 def init(channel):
     """ 初始化参数 """
-    N = channel.get_config((const.main_config, const.node_count))
-    NODE_ID = channel.get_config([const.index])
+    current_module.N = channel.get_config((const.main_config, const.node_count))
+    current_module.NODE_ID = channel.get_config([const.index])
 
     # 云端测试环境
-    C = channel.get_config([const.max_channel_conn])
+    current_module.C = channel.get_config([const.max_channel_conn])
     # 本地测试环境
     with open("server/cmake-build-debug/server.json") as f:
         config = json.load(f)
-        C = config["mainConfig"]["maxChannelCount"][NODE_ID - 1]
+        current_module.C = config["mainConfig"]["maxChannelCount"][NODE_ID - 1]
+        print("C", C)
 
-    TIME_OUT = channel.get_config((const.main_config, const.timeout))
-    TIME_BUILD_H = channel.get_config(
+    current_module.TIME_OUT = channel.get_config((const.main_config, const.timeout))
+    current_module.TIME_BUILD_H = channel.get_config(
         (const.channel_config, const.high_speed, "buildTime")
     )
-    TIME_BUILD_H = channel.get_config(
+    current_module.TIME_BUILD_H = channel.get_config(
         (const.channel_config, const.normal_speed, "buildTime")
     )
-    LAG_H = channel.get_config((const.channel_config, const.high_speed, const.lag))
-    LAG_N = channel.get_config((const.channel_config, const.normal_speed, const.lag))
-    M_H = channel.get_config((const.channel_config, const.high_speed, "maxCount"))
-    M_N = channel.get_config((const.channel_config, const.normal_speed, "maxCount"))
+    current_module.LAG_H = channel.get_config(
+        (const.channel_config, const.high_speed, const.lag)
+    )
+    current_module.LAG_N = channel.get_config(
+        (const.channel_config, const.normal_speed, const.lag)
+    )
+    current_module.M_H = channel.get_config(
+        (const.channel_config, const.high_speed, "maxCount")
+    )
+    current_module.M_N = channel.get_config(
+        (const.channel_config, const.normal_speed, "maxCount")
+    )
 
 
 """
@@ -67,6 +79,7 @@ route_table = []
 """
 adjacent_nodes = []
 
+requiring_channels=[]
 
 def get_channel(adj_node):
     for n in adjacent_nodes:

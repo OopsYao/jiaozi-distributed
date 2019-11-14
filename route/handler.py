@@ -3,6 +3,7 @@ from tool import caller
 from conn import channel
 from conn import const
 import random
+from route import dispatcher
 
 
 class SendHandler:
@@ -10,6 +11,7 @@ class SendHandler:
 
     # 为有pepare的send消息规划的节点 默认为None
     node_intend = None
+    channel_id = 0
 
     def _rand_channel(self):
         """ 按策略随机选择通道类型 """
@@ -20,24 +22,13 @@ class SendHandler:
             return const.CHANNEL_TYPE_NORMAL
 
     def on_prepare(self, target_node, delay, prepare_message):
-        for record in node.route_table:
-            if record["end"] == target_node:
-                node_intend = target_node
-        else:
-            # 没有找到
-            # 满足C限制，未达节点最大连接数上限
-            if node.adjacent_nodes < node.C:
-                # 尝试建立通道
-                caller.build_channel(
-                    target_node,
-                    self._rand_channel(),
-                    _on_build_success,
-                    _on_build_failure,
-                )
-
         def _on_build_success(target_node, channel_id, channel_type):
+            # 设置好预设节点(如果send message晚于通道建成)
             self.node_intend = target_node
-            # 修改路由表
+            # 发送那个消息(如果send message早于通道建成)
+            if hasattr(self, "send_message"):
+                caller.send_message(self.send_message, target_node, channel_id)
+            # 修改邻接表
             node.adjacent_nodes.append(
                 {
                     "target": target_node,
@@ -45,11 +36,16 @@ class SendHandler:
                     "channelId": channel_id,
                 }
             )
+            # 修改路由表
+            node.route_table.append(
+                {"next_node": target_node, "m_h": 0, "m_l": 0, "end": target_node}
+            )
             # 向周围节点发送通知（除了建立通道的那个节点）
             for adj_node in node.adjacent_nodes:
                 if adj_node["target"] != target_node:
-                    ano_channel_type, ano_channel_id = node.get_channel(
-                        adj_node["target"]
+                    ano_channel_type, ano_channel_id = (
+                        adj_node["channelType"],
+                        adj_node["channelId"],
                     )
                     # 接受通知的那个节点到自己再到建立通道的那个节点之间高速通道数目(0, 1, 2)
                     m_h = (1 if channel_type == const.CHANNEL_TYPE_FAST else 0) + (
@@ -69,7 +65,8 @@ class SendHandler:
                         adj_node["channelId"],
                     )
 
-        def _on_build_failure(prepare_message):
+        def _on_build_failure(error_code=None):
+            pre_msg = prepare_message
             # 从邻接节点里随机选一个转发prepare消息（高速通道优先）
             candidates = [
                 adj
@@ -84,19 +81,62 @@ class SendHandler:
 
             # 存储该节点，下次直接将相应的send转发给他
             self.node_intend = bingo["target"]
-            caller.send_message(prepare_message, bingo["target"], bingo["channelId"])
+            caller.send_message(pre_msg, bingo["target"], bingo["channelId"])
+
+        for record in node.route_table:
+            if record["end"] == target_node:
+                self.node_intend = target_node
+                break
+        else:
+            # 没有找到
+            # 满足C限制，未达节点最大连接数上限
+            print("当前邻接节点数", len(node.adjacent_nodes))
+            print("最大持有通道数", node.C)
+            if len(node.adjacent_nodes) < node.C:
+                # 尝试建立通道
+                print("尝试建立通道...")
+                print("准备发出建立通道请求前检查队列", node.requiring_channels)
+                # 如果前面已有一个在申请
+                if (
+                    (target_node, const.CHANNEL_TYPE_FAST) in node.requiring_channels
+                    or (target_node, const.CHANNEL_TYPE_NORMAL)
+                    in node.requiring_channels
+                ):
+                    # 注册自己
+                    dispatcher.await_build_result(
+                        target_node, None, _on_build_success, _on_build_failure
+                    )
+                    return
+
+                caller.build_channel(
+                    target_node,
+                    self._rand_channel(),
+                    _on_build_success,
+                    _on_build_failure,
+                )
+            else:
+                _on_build_failure()
 
     def on_send(self, target_node, send_message):
+        if node.NODE_ID == target_node:
+            print("Success recved")
+            return
+
         if self.node_intend != None:
             _, channel_id = node.get_channel(self.node_intend)
             caller.send_message(send_message, self.node_intend, channel_id)
         else:
-            # 没有预先的prepare，则路由表里一定有相应记录
             for record in node.route_table:
                 if record["end"] == target_node:
+                    # 说明是没有prepare的send
                     next_node = record["next_node"]
                     _, channel_id = node.get_channel(next_node)
                     caller.send_message(send_message, next_node, channel_id)
+                    break
+            else:
+                # 此时申请的通道尚未建立好
+                # 将消息缓存起来
+                self.send_message = send_message
 
 
 class BuildRequestHandler:
@@ -106,9 +146,11 @@ class BuildRequestHandler:
         # 直接同意
         self.channel_type = channel_type
         self.request_node = request_node
+        # 存储已有通道正在建立的信息
+        node.requiring_channels.append((request_node, channel_type))
         return True
 
-    def on_channel_build_success(self, channel_id):
+    def on_channel_build_success(self, target_node, channel_id, channel_type):
         # 修改邻接表
         node.adjacent_nodes.append(
             {
@@ -132,7 +174,7 @@ class BuildRequestHandler:
         for adj in node.adjacent_nodes:
             if adj["target"] == self.request_node:
                 continue
-            adj_channel_type, adj_channel_id = node.get_channel(adj)
+            adj_channel_type, adj_channel_id = adj["channelType"], adj["channelId"]
             caller.send_sys_message(
                 {
                     "route_msg": {
@@ -210,6 +252,7 @@ class SysHandler:
 
     def on_sys(self, message):
         # 取出extMessage
+        print(message)
         route = message["extMessage"]["route_msg"]
 
         # 新时延
@@ -233,6 +276,7 @@ class SysHandler:
                 self.modify_route_table(scan_result, route)
 
         # 修改该条记录中的next_node = 当前节点ID
+        route["next_node"] = node.NODE_ID
 
         # 广播该条消息
         adjacent_nodes = node.adjacent_nodes
@@ -240,12 +284,18 @@ class SysHandler:
             if adjacent["channelType"] == 0:
                 route["m_l"] += 1
                 # 向该邻接节点发送msg'
+                caller.send_sys_message(
+                    {"route_msg": route}, adjacent["target"], adjacent["channelId"]
+                )
 
                 # 修改回msg
                 route["m_l"] -= 1
             else:
                 route["m_h"] += 1
                 # 向邻接节点发送msg'
+                caller.send_sys_message(
+                    {"route_msg": route}, adjacent["target"], adjacent["channelId"]
+                )
 
                 # 修改回msg
                 route["m_h"] -= 1

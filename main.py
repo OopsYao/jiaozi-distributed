@@ -3,7 +3,7 @@ import json
 import time
 from route import node
 from route import dispatcher
-
+from tool import caller
 
 def main():
     channel = GeneralChannel()
@@ -11,6 +11,7 @@ def main():
         config = json.load(f)
         channel.init_config(config)
         node.init(channel)
+        caller.init(channel)
         main_loop(channel)
 
 
