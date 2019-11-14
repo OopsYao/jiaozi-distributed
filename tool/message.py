@@ -38,6 +38,7 @@ def get_sys_msg(ext_msg, target_node, channel_id):
     msg[const.call_type] = const.CALL_TYPE_SYS
     msg[const.sys_message][const.target] = target_node
     msg[const.channel_id] = channel_id
+    msg["extMessage"] = ext_msg
     return msg
 
 
